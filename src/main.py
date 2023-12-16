@@ -33,34 +33,10 @@ class RBTNode():
 
     def updateHeight(self) -> None:
         '''
-        Метод, обновляющий высоту узла
+        Метод, помогающий обновить высоту узла
         :return: None
         '''
         self.height = 1 + max(self.right.getHeight() if self.right else 0, self.left.getHeight() if self.left else 0)
-
-    def getBlackHeight(self) -> int:
-        '''
-        Метод для быстрого получения количества черных узлов
-        :return: int, искомое количество
-        '''
-        countBlack = int(self.black)
-        tmp = self.parent
-        while tmp:
-            countBlack += int(tmp.black)
-            tmp = tmp.parent
-        return countBlack
-
-    def getRedHeight(self):
-        '''
-        Метод для быстрого получения количества красных узлов
-        :return: int, искомое количество
-        '''
-        countRed = int(not self.black)
-        tmp = self.parent
-        while tmp:
-            countRed += int(not tmp.black)
-            tmp = tmp.parent
-        return countRed
 
     def getParent(self):
         '''
@@ -84,9 +60,9 @@ class RBTNode():
         Метод для быстрого получения дядюшки текущего узла
         :return: ссылка на дядю (или тётю)
         '''
-        parent = self.getGrandParent()
+        parent = self.getParent()
         if parent and parent.getParent():
-            if parent.value < parent.getParent().value:
+            if parent.val < parent.getParent().val:
                 return self.getGrandParent().right
             else:
                 return self.getGrandParent().left
@@ -102,9 +78,9 @@ class RBTNode():
     def getColor(self):
         '''
         Метод позволяющий быстро получить цвет текущего узла
-        :return:
+        :return: False - Red, True - Black
         '''
-        return self.color
+        return self.black
 
     def __str__(self):
         '''
@@ -155,7 +131,7 @@ class NILNode(RBTNode):
 
 class Tree:
     '''
-    Класс, представляющий реализацию классического бинарного дерева
+    Класс, представляющий реализацию классического бинарного дерева поиска
     '''
     def __init__(self, root) -> None:
         '''
@@ -164,7 +140,7 @@ class Tree:
         '''
         self.root = root
 
-    def in_order_traversal(self, tmp):
+    def inOrderTraversal(self, tmp):
         '''
         Проход по дереву в симметричном порядке
         :param tmp: текущий узел, через который проходим
@@ -172,11 +148,11 @@ class Tree:
         '''
         if tmp is None:
             return []
-        left_result = self.in_order_traversal(tmp.left)
-        right_result = self.in_order_traversal(tmp.right)
+        left_result = self.inOrderTraversal(tmp.left)
+        right_result = self.inOrderTraversal(tmp.right)
         return left_result + [tmp] + right_result
 
-    def pre_order_traversal(self, tmp):
+    def preOrderTraversal(self, tmp):
         '''
         Проход по дереву в прямом порядке
         :param tmp: текущий узел, через который проходим
@@ -184,11 +160,11 @@ class Tree:
         '''
         if tmp is None:
             return []
-        left_result = self.in_order_traversal(tmp.left)
-        right_result = self.in_order_traversal(tmp.right)
+        left_result = self.preOrderTraversal(tmp.left)
+        right_result = self.preOrderTraversal(tmp.right)
         return [tmp] + left_result + right_result
 
-    def post_order_traversal(self, tmp):
+    def postOrderTraversal(self, tmp):
         '''
         Проход по дереву в обратном порядке
         :param tmp: текущий узел, через который проходим
@@ -196,8 +172,8 @@ class Tree:
         '''
         if tmp is None:
             return []
-        left_result = self.in_order_traversal(tmp.left)
-        right_result = self.in_order_traversal(tmp.right)
+        left_result = self.postOrderTraversal(tmp.left)
+        right_result = self.postOrderTraversal(tmp.right)
         return left_result + right_result + [tmp]
 
     def isBalanced(self) -> bool:
@@ -240,14 +216,12 @@ class RedBlackTree(Tree):
         :param key: заданное значение
         :return: узел с найденным значением
         '''
-        tmp = self.root
-        while tmp is not None and tmp.val != val:
+        tmp = self.getRoot()
+        while tmp is not self.NIL and tmp.val != val:
             if val < tmp.val:
                 tmp = tmp.left
             else:
                 tmp = tmp.right
-        if tmp.val != val:
-            raise KeyError(f"Node with key {val} is not found")
         return tmp
 
     def insert(self, val) -> None:
@@ -267,7 +241,7 @@ class RedBlackTree(Tree):
         :param new_node: новый узел, который нужно вставить в дерево
         :return:
         '''
-        tmp = self.root
+        tmp = self.getRoot()
         prev_tmp = None
         while tmp != self.NIL and tmp is not None:
             prev_tmp = tmp
@@ -294,7 +268,7 @@ class RedBlackTree(Tree):
         '''
         while node.parent and node.parent.black is False:
             if node.parent == node.parent.parent.left:
-                uncle = node.parent.parent.right
+                uncle = node.getUncle()
                 if uncle.black is False:
                     node.parent.black = True
                     uncle.black = True
@@ -308,7 +282,7 @@ class RedBlackTree(Tree):
                     node.parent.parent.black = False
                     self.__right_rotate(node.parent.parent)
             else:
-                uncle = node.parent.parent.left
+                uncle = node.getUncle()
                 if uncle.black is not True:
                     node.parent.black = True
                     uncle.black = True
@@ -372,6 +346,52 @@ class RedBlackTree(Tree):
         x.right = y
         y.parent = x
 
+    def delete(self, key):
+        nodeToDel = self.find(key)
+        if nodeToDel is not self.NIL:
+            self.__delete(nodeToDel)
+
+    def __delete(self, node):
+        nodeBlack = node.black
+
+        if node.left == self.NIL:
+            x = node.right
+            self.__transplant(node, node.right)
+        elif node.right == self.NIL:
+            x = node.left
+            self.__transplant(node, node.left)
+        else:
+            y = self.__minNode(node.right)
+            nodeBlack = y.black
+            x = y.right
+            if y.parent == node:
+                x.parent = y
+            else:
+                self.__transplant(y, y.right)
+                y.right = node.right
+                y.right.parent = y
+            self.__transplant(node, y)
+            y.left = node.left
+            y.left.parent = y
+            y.color = node.color
+
+        if nodeBlack is True:
+            self.__balance(x)
+
+    def __transplant(self, u, v):
+        if u.parent == self.NIL:
+            self.root = v
+        elif u == u.parent.left:
+            u.parent.left = v
+        else:
+            u.parent.right = v
+        v.parent = u.parent
+
+    def __minNode(self, node):
+        while node.left is not self.NIL:
+            node = node.left
+        return node
+
     def getRoot(self):
         '''
         Метод для быстрого получения узла дерева
@@ -394,7 +414,7 @@ class RedBlackTree(Tree):
         Приватный метод помощник для строкового представления дерева
         :param tmp: текущий обратавыаемый узел
         :param str_arr: массив, содержащий строковое представление всех узлов дерева
-        :param level: текущая глубина 
+        :param level: текущая глубина
         :return:
         '''
         if tmp is not None:
@@ -410,9 +430,10 @@ def main():
     rbt.insert(35)
     rbt.insert(28)
     rbt.insert(120)
-    print(rbt.getRoot().getHeight())
+    rbt.insert(44)
+    rbt.insert(19)
+    # rbt.delete(120)
     print(rbt)
-    print(rbt.getRoot().getHeight())
 
 if __name__ == "__main__":
     main()
