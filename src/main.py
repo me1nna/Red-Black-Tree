@@ -1,3 +1,7 @@
+import random
+import time
+
+
 class RBTNode():
     '''
     Класс, представляющий узел красно-черного дерева.
@@ -266,17 +270,17 @@ class RedBlackTree(Tree):
         :param node: узел, с которого происходит балансировка
         :return:
         '''
-        while node.parent and node.parent.black is False:
-            if node.parent == node.parent.parent.left:
+        while node.getParent() and node.getParent().black is False:
+            if node.getParent() == node.getGrandParent().left:
                 uncle = node.getUncle()
                 if uncle.black is False:
-                    node.parent.black = True
+                    node.getParent().black = True
                     uncle.black = True
-                    node.parent.parent.black = False
-                    node = node.parent.parent
+                    node.getGrandParent().black = False
+                    node = node.getGrandParent()
                 else:
-                    if node == node.parent.right:
-                        node = node.parent
+                    if node == node.getParent().right:
+                        node = node.getParent()
                         self.__left_rotate(node)
                     node.parent.black = True
                     node.parent.parent.black = False
@@ -287,10 +291,10 @@ class RedBlackTree(Tree):
                     node.parent.black = True
                     uncle.black = True
                     node.parent.parent.black = False
-                    node = node.parent.parent
+                    node = node.getGrandParent()
                 else:
-                    if node == node.parent.left:
-                        node = node.parent
+                    if node == node.getParent().left:
+                        node = node.getParent()
                         self.__right_rotate(node)
                     node.parent.black = True
                     node.parent.parent.black = False
@@ -346,52 +350,6 @@ class RedBlackTree(Tree):
         x.right = y
         y.parent = x
 
-    def delete(self, key):
-        nodeToDel = self.find(key)
-        if nodeToDel is not self.NIL:
-            self.__delete(nodeToDel)
-
-    def __delete(self, node):
-        nodeBlack = node.black
-
-        if node.left == self.NIL:
-            x = node.right
-            self.__transplant(node, node.right)
-        elif node.right == self.NIL:
-            x = node.left
-            self.__transplant(node, node.left)
-        else:
-            y = self.__minNode(node.right)
-            nodeBlack = y.black
-            x = y.right
-            if y.parent == node:
-                x.parent = y
-            else:
-                self.__transplant(y, y.right)
-                y.right = node.right
-                y.right.parent = y
-            self.__transplant(node, y)
-            y.left = node.left
-            y.left.parent = y
-            y.color = node.color
-
-        if nodeBlack is True:
-            self.__balance(x)
-
-    def __transplant(self, u, v):
-        if u.parent == self.NIL:
-            self.root = v
-        elif u == u.parent.left:
-            u.parent.left = v
-        else:
-            u.parent.right = v
-        v.parent = u.parent
-
-    def __minNode(self, node):
-        while node.left is not self.NIL:
-            node = node.left
-        return node
-
     def getRoot(self):
         '''
         Метод для быстрого получения узла дерева
@@ -425,15 +383,55 @@ class RedBlackTree(Tree):
 
 
 def main():
-    rbtnode = RBTNode(val=32)
-    rbt = RedBlackTree(root=rbtnode)
-    rbt.insert(35)
-    rbt.insert(28)
-    rbt.insert(120)
-    rbt.insert(44)
-    rbt.insert(19)
-    # rbt.delete(120)
-    print(rbt)
+    rbt1 = RedBlackTree()
+    for i in range(10):
+        val = random.randint(1, 100)
+        rbt1.insert(val)
+
+    start = time.time()
+    rbt1.insert(random.randint(1, 100))
+    end = time.time()
+    print(f"Вставка в дерево 10^1 {end - start}")
+
+    rbt2 = RedBlackTree()
+    for i in range(100):
+        val = random.randint(1, 100)
+        rbt2.insert(val)
+
+    start = time.time()
+    rbt2.insert(random.randint(1, 100))
+    end = time.time()
+    print(f"Вставка в дерево 10^2 {end - start}")
+
+    rbt3 = RedBlackTree()
+    for i in range(1000):
+        val = random.randint(1, 100)
+        rbt3.insert(val)
+
+    start = time.time()
+    rbt3.insert(random.randint(1, 100))
+    end = time.time()
+    print(f"Вставка в дерево 10^3 {end - start}")
+
+    rbt4 = RedBlackTree()
+    for i in range(10000):
+        val = random.randint(1, 100)
+        rbt4.insert(val)
+
+    start = time.time()
+    rbt4.insert(random.randint(1, 100))
+    end = time.time()
+    print(f"Вставка в дерево 10^4 {end - start}")
+
+    rbt5 = RedBlackTree()
+    for i in range(100000):
+        val = random.randint(1, 100)
+        rbt5.insert(val)
+
+    start = time.time()
+    rbt5.insert(random.randint(1, 100))
+    end = time.time()
+    print(f"Вставка в дерево 10^5 {end - start}")
 
 if __name__ == "__main__":
     main()
